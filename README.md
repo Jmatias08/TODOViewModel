@@ -9,6 +9,20 @@ A simple Android TODO app built with Kotlin and Jetpack Compose.
 
 Tasks are kept in a local, in-memory list.
 
+The codelab refactor is implemented in this working copy: tasks are owned by a
+repository, exposed through a ViewModel and collected by a lifecycle-aware Compose
+screen. Tasks and the input draft survive configuration changes; tasks are not
+persisted after process death. The original codelab below remains available as a
+learning reference.
+
+Validate the implementation on Windows using JDK 17. For this checkout under an
+accented Windows username, use the native encoding for Gradle's Java 17 worker
+argument files:
+
+```powershell
+.\gradlew.bat testDebugUnitTest assembleDebug lintDebug "-Dorg.gradle.jvmargs=-Xmx2048m -Dfile.encoding=windows-1252"
+```
+
 ## Requirements
 
 - Android Studio (latest stable version)
@@ -34,14 +48,19 @@ Open the project in Android Studio and click **Run**, or from the command line:
 ```
 app/src/main/java/com/example/todoviewmodel/
 ├── MainActivity.kt        # Hosts the Compose UI
+├── data/
+│   ├── Todo.kt            # Task model
+│   └── TodoRepository.kt  # In-memory source of truth (StateFlow)
 ├── theme/                 # Material 3 theme
 └── ui/
-    └── TodoScreen.kt      # The TODO screen: UI, state and logic
+    ├── TodoScreen.kt      # ViewModel connection, content and previews
+    ├── TodoUiState.kt     # Screen state and derived values
+    └── TodoViewModel.kt   # Input validation and user events
 ```
 
 ## Improving the app
 
-All of the app's state and logic lives inside the `TodoScreen` composable, using `remember`. This keeps the code short, but it has some problems:
+In the starting version, all of the app's state and logic lives inside the `TodoScreen` composable, using `remember`. This keeps the code short, but it has some problems:
 
 - **Tasks are lost on configuration changes.** Rotate the device, switch to dark mode or resize the window and the list is empty again, because `remember` does not survive the `Activity` being recreated.
 - **UI and logic are mixed together.** Generating ids, validating input and updating the list all happen inside the UI code.
